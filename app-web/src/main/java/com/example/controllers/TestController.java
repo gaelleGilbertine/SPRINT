@@ -20,7 +20,7 @@ public class TestController {
         return data;
     }
 
-    // SORTIE HTML : sans @JsonAnnotation, forward vers bienvenue.jsp
+    // SORTIE HTML : sans @JsonAnnotation,forward vers bienvenue.jsp
     @UrlAnnotation("/page/hello")
     public ModelAndView helloPage() {
         ModelAndView mv = new ModelAndView("bienvenue.jsp");
