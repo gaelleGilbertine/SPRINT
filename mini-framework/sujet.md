@@ -24,3 +24,11 @@ Etape (To do)
 
 sprint 6
  refa manao requette tsy manao requette dispacher fa json
+
+sprint 7
+- creer un formulaire dans front
+- avoir une fonction dans controller
+- la fonction recoit les parametres du formulaire
+
+sprint 7 Bis
+ la meme chose que 7 mais recois un objet cette fois ci 
