@@ -17,6 +17,8 @@ import model.MethodeInfo;
 import model.ModelAndView;
 import model.UrlInfo;
 
+import java.lang.reflect.Parameter;
+
 public class FrontControllerServlet extends HttpServlet {
     private HashMap<UrlInfo, MethodeInfo> mapping = new HashMap<>();
     private String prefixe = "";
@@ -46,6 +48,8 @@ public class FrontControllerServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        request.setCharacterEncoding("UTF-8");
+
         String contextPath = request.getContextPath();
         String route = request.getRequestURI().substring(contextPath.length());
         if (route.equals("")) {
@@ -73,7 +77,8 @@ public class FrontControllerServlet extends HttpServlet {
         try {
             Method m = method.getMethode();
             Object instance = m.getDeclaringClass().getDeclaredConstructor().newInstance();
-            Object resultat = m.invoke(instance);
+            Object[] args = construireArguments(m, request);
+            Object resultat = m.invoke(instance, args);
 
             // Cas 1 : @JsonAnnotation -> JSON direct, sans dispatcher
             if (m.isAnnotationPresent(JsonAnnotation.class)) {
@@ -102,8 +107,31 @@ public class FrontControllerServlet extends HttpServlet {
                 }
                 request.getRequestDispatcher(urlSuivant).forward(request, response);
             }
+
         } catch (Exception e) {
             throw new ServletException("Erreur lors de l'invocation de la méthode", e);
         }
     }
+
+    private Object[] construireArguments(Method m, HttpServletRequest request) {
+    Parameter[] params = m.getParameters();
+    Object[] args = new Object[params.length];
+    for (int i = 0; i < params.length; i++) {
+        String valeur = request.getParameter(params[i].getName());
+        args[i] = convertir(valeur, params[i].getType());
+    }
+    return args;
+}
+
+private Object convertir(String valeur, Class<?> type) {
+    if (type == String.class) return valeur;
+    if (valeur == null || valeur.isEmpty()) {
+        return type.isPrimitive() ? (type == boolean.class ? (Object) false : (Object) 0) : null;
+    }
+    if (type == int.class || type == Integer.class) return Integer.parseInt(valeur);
+    if (type == long.class || type == Long.class) return Long.parseLong(valeur);
+    if (type == double.class || type == Double.class) return Double.parseDouble(valeur);
+    if (type == boolean.class || type == Boolean.class) return Boolean.parseBoolean(valeur);
+    return valeur;
+}
 }
