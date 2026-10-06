@@ -20,7 +20,6 @@
     </properties>
 
     <dependencies>
-        <!-- Ton framework (Gson arrive automatiquement avec) -->
         <dependency>
             <groupId>sprint0</groupId>
             <artifactId>framework</artifactId>
@@ -39,7 +38,6 @@
         <finalName>app-web</finalName>
 
         <plugins>
-            <!-- Version récente, compatible avec ton JDK -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
@@ -50,6 +48,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
             </plugin>
         </plugins>
     </build>

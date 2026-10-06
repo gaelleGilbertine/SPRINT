@@ -6,6 +6,8 @@ import annotation.UrlAnnotation;
 import java.util.HashMap;
 import model.ModelAndView;
 
+import model.HTTPmethode;
+
 @Annotation
 public class TestController {
 
@@ -29,4 +31,12 @@ public class TestController {
         mv.addObject("status", "ok");
         return mv;
     }
+
+    @UrlAnnotation(value = "/personne/save", httpmethode = HTTPmethode.POST)
+public ModelAndView save(String nom, int age) {
+    ModelAndView mv = new ModelAndView("resultat.jsp");
+    mv.addObject("nom", nom);
+    mv.addObject("age", String.valueOf(age));
+    return mv;
+}
 }

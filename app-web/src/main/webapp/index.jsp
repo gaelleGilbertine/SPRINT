@@ -10,6 +10,7 @@
     <ul>
         <li><a href="page/hello">Sortie HTML (forward vers une JSP)</a></li>
         <li><a href="api/hello">Sortie JSON (@JsonAnnotation)</a></li>
+        <li><a href="formulaire.jsp">Formulaire (sprint 7)</a></li>
     </ul>
 </body>
 </html>
