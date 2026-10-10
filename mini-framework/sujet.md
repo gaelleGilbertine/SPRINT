@@ -23,3 +23,11 @@ sprint 7 Bis
  6. /opt/Tomcat/bin/startup.sh
  7. ls /opt/Tomcat/webapps/app-web/
     tail -30 /opt/Tomcat/logs/catalina.out
+
+CHANGEMENT DE VERSION JAVA:
+sudo update-alternatives --config javac
+
+test Get : curl -i "http://localhost:8080/app-web/personne/save?nom=Rakoto&age=25&prenom=Jean"
+test Post: curl -i -X POST \
+  -d "nom=Rakoto" -d "age=25" -d "prenom=Jean" \
+  http://localhost:8080/app-web/personne/save

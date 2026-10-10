@@ -6,5 +6,6 @@
     <h1>Données reçues</h1>
     <p>Nom : ${nom}</p>
     <p>Age : ${age}</p>
+    <p>Prenom : ${prenom}</p>
 </body>
 </html>

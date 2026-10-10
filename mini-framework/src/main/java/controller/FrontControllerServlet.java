@@ -19,6 +19,9 @@ import model.UrlInfo;
 
 import java.lang.reflect.Parameter;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+
 public class FrontControllerServlet extends HttpServlet {
     private HashMap<UrlInfo, MethodeInfo> mapping = new HashMap<>();
     private String prefixe = "";
@@ -113,14 +116,39 @@ public class FrontControllerServlet extends HttpServlet {
         }
     }
 
-    private Object[] construireArguments(Method m, HttpServletRequest request) {
+    private Object[] construireArguments(Method m, HttpServletRequest request) throws Exception {
     Parameter[] params = m.getParameters();
     Object[] args = new Object[params.length];
     for (int i = 0; i < params.length; i++) {
-        String valeur = request.getParameter(params[i].getName());
-        args[i] = convertir(valeur, params[i].getType());
+        Class<?> type = params[i].getType();
+        if (estSimple(type)) {
+            // Sprint 7 : paramètre simple
+            args[i] = convertir(request.getParameter(params[i].getName()), type);
+        } else {
+            // Sprint 7 bis : objet
+            args[i] = construireObjet(type, params[i].getName(), request);
+        }
     }
     return args;
+}
+
+private boolean estSimple(Class<?> type) {
+    return type.isPrimitive() || type == String.class
+            || Number.class.isAssignableFrom(type) || type == Boolean.class;
+}
+
+private Object construireObjet(Class<?> type, String nomParam, HttpServletRequest request) throws Exception {
+    Object obj = type.getDeclaredConstructor().newInstance();
+    for (Field f : type.getDeclaredFields()) {
+        if (Modifier.isStatic(f.getModifiers())) continue;
+        // accepte "p.nom" (avec le nom du paramètre) ou simplement "nom"
+        String valeur = request.getParameter(nomParam + "." + f.getName());
+        if (valeur == null) valeur = request.getParameter(f.getName());
+        if (valeur == null) continue;
+        f.setAccessible(true);
+        f.set(obj, convertir(valeur, f.getType()));
+    }
+    return obj;
 }
 
 private Object convertir(String valeur, Class<?> type) {
