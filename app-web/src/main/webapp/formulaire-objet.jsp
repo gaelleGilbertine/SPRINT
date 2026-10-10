@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Formulaire</h1>
-    <form id="monForm" action="${pageContext.request.contextPath}/personne/save" method="post">
+   <form id="monForm" action="${pageContext.request.contextPath}/personne/objet" method="post">
         <label>Nom : <input type="text" name="nom"></label><br>
         <label>Age : <input type="number" name="age"></label><br>
         <label>Prenom : <input type="text" name="prenom"></label><br>

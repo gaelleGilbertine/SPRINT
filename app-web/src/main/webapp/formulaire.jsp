@@ -7,10 +7,20 @@
 </head>
 <body>
     <h1>Formulaire</h1>
-    <form action="${pageContext.request.contextPath}/personne/save" method="post">
+    <form id="monForm" action="${pageContext.request.contextPath}/personne/save" method="post">
         <label>Nom : <input type="text" name="nom"></label><br>
         <label>Age : <input type="number" name="age"></label><br>
+        <label>Prenom : <input type="text" name="prenom"></label><br>
+
+        <label>Méthode :
+        <select onchange="document.getElementById('monForm').method = this.value">
+            <option value="post">POST</option>
+            <option value="get">GET</option>
+        </select>
+    </label><br>
+
+
         <button type="submit">Envoyer</button>
     </form>
 </body>
-</html>
+</html> 
