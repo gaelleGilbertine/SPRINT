@@ -12,6 +12,8 @@
         <li><a href="api/hello">Sortie JSON (@JsonAnnotation)</a></li>
         <li><a href="formulaire.jsp">Formulaire (sprint 7)</a></li>
         <li><a href="formulaire-objet.jsp">Formulaire (sprint 7 bis, objet)</a></li>
+        <li><a href="formulaire-multi.jsp">Formulaire (sprint 7 bis, plusieurs objets)</a></li>
+        <li><a href="formulaire-mixte.jsp">Formulaire (sprint 7 bis, simple + objet)</a></li>
     </ul>
 </body>
 </html>

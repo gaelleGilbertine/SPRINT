@@ -31,3 +31,7 @@
 ## Object resultat = m.invoke(instance, args);
 - m.invoke : pour executer dynamiquement la methode represente par m 
 - appele la methode avec ces arguments 
+
+## Class<?> type = params[i].getType();
+
+## comment on sait qu'on recupere le type simple ou l'objet hors ca vient d'un formulaire identique (construireArgument)

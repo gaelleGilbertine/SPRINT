@@ -8,7 +8,11 @@
 - la fonction recoit les parametres du formulaire
 
 sprint 7 Bis
- la meme chose que 7 mais recois un objet cette fois ci 
+- la meme chose que 7 mais recois un objet cette fois ci 
+- utiliser la recursion
+- afaka mandray objet mitovy maro (arrive a reconnaitre d'ou vient l'objet)
+- afaka mandray tsy objet sy objet  
+
 
 
  DEPLOYEMENT: 
@@ -31,3 +35,5 @@ test Get : curl -i "http://localhost:8080/app-web/personne/save?nom=Rakoto&age=2
 test Post: curl -i -X POST \
   -d "nom=Rakoto" -d "age=25" -d "prenom=Jean" \
   http://localhost:8080/app-web/personne/save
+
+test recursion : curl -s "http://localhost:8080/app-web/api/personne?nom=Rakoto&age=25&prenom=Jean&adresse.rue=Lot12&adresse.ville=Tana&adresse.codePostal=101"
