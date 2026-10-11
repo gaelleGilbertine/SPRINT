@@ -7,5 +7,9 @@
     <p>Nom : ${nom}</p>
     <p>Age : ${age}</p>
     <p>Prenom : ${prenom}</p>
+    <h2>Adresse (objet imbriqué)</h2>
+    <p>Rue : ${rue}</p>
+    <p>Ville : ${ville}</p>
+    <p>Code postal : ${codePostal}</p>
 </body>
 </html>

@@ -11,6 +11,9 @@
         <label>Nom : <input type="text" name="nom"></label><br>
         <label>Age : <input type="number" name="age"></label><br>
         <label>Prenom : <input type="text" name="prenom"></label><br>
+        <label>Rue : <input type="text" name="adresse.rue"></label><br>
+        <label>Ville : <input type="text" name="adresse.ville"></label><br>
+        <label>Code postal : <input type="number" name="adresse.codePostal"></label><br>
 
         <label>Méthode :
         <select onchange="document.getElementById('monForm').method = this.value">

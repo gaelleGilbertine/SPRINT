@@ -1,2 +1,3 @@
 com/example/controllers/TestController.class
 com/example/models/Personne.class
+com/example/models/Adresse.class

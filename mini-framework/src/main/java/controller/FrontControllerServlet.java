@@ -22,6 +22,11 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+import java.util.Arrays;
+
+import java.util.HashSet;
+import java.util.Set;
+
 public class FrontControllerServlet extends HttpServlet {
     private HashMap<UrlInfo, MethodeInfo> mapping = new HashMap<>();
     private String prefixe = "";
@@ -116,17 +121,27 @@ public class FrontControllerServlet extends HttpServlet {
         }
     }
 
-    private Object[] construireArguments(Method m, HttpServletRequest request) throws Exception {
+// prepare les argument necessaires pour l'appel d'une methode java
+private Object[] construireArguments(Method m, HttpServletRequest request) throws Exception {
     Parameter[] params = m.getParameters();
     Object[] args = new Object[params.length];
+
+    long nbObjets = Arrays.stream(params).filter(p -> !estSimple(p.getType())).count();
+    boolean sansPrefixeAutorise = (nbObjets == 1);
+
+    // Noms déjà pris par les paramètres simples (ex : "titre", "quantite")
+    Set<String> nomsReserves = new HashSet<>();
+    for (Parameter p : params) {
+        if (estSimple(p.getType())) nomsReserves.add(p.getName());
+    }
+
     for (int i = 0; i < params.length; i++) {
         Class<?> type = params[i].getType();
         if (estSimple(type)) {
-            // Sprint 7 : paramètre simple
             args[i] = convertir(request.getParameter(params[i].getName()), type);
         } else {
-            // Sprint 7 bis : objet
-            args[i] = construireObjet(type, params[i].getName(), request);
+            args[i] = construireObjet(type, params[i].getName(), "",
+                                      sansPrefixeAutorise, nomsReserves, request);
         }
     }
     return args;
@@ -137,16 +152,33 @@ private boolean estSimple(Class<?> type) {
             || Number.class.isAssignableFrom(type) || type == Boolean.class;
 }
 
-private Object construireObjet(Class<?> type, String nomParam, HttpServletRequest request) throws Exception {
+private Object construireObjet(Class<?> type, String nomParam, String chemin,
+                               boolean sansPrefixeAutorise, Set<String> nomsReserves,
+                               HttpServletRequest request) throws Exception {
+    System.out.println("RECURSION -> construireObjet(" + type.getSimpleName()
+            + ", parametre='" + nomParam + "', chemin='" + chemin + "')");
     Object obj = type.getDeclaredConstructor().newInstance();
+
     for (Field f : type.getDeclaredFields()) {
         if (Modifier.isStatic(f.getModifiers())) continue;
-        // accepte "p.nom" (avec le nom du paramètre) ou simplement "nom"
-        String valeur = request.getParameter(nomParam + "." + f.getName());
-        if (valeur == null) valeur = request.getParameter(f.getName());
-        if (valeur == null) continue;
+
+        String cheminChamp = chemin.isEmpty() ? f.getName() : chemin + "." + f.getName();
         f.setAccessible(true);
-        f.set(obj, convertir(valeur, f.getType()));
+
+        if (estSimple(f.getType())) {
+            String valeur = request.getParameter(nomParam + "." + cheminChamp);
+            // Sans préfixe : seulement si autorisé ET si le nom n'appartient pas à un paramètre simple
+            if (valeur == null && sansPrefixeAutorise && !nomsReserves.contains(cheminChamp)) {
+                valeur = request.getParameter(cheminChamp);
+            }
+            if (valeur == null) continue;
+            f.set(obj, convertir(valeur, f.getType()));
+
+        } else if (!f.getType().getName().startsWith("java.")) {
+            Object enfant = construireObjet(f.getType(), nomParam, cheminChamp,
+                                            sansPrefixeAutorise, nomsReserves, request);
+            f.set(obj, enfant);
+        }
     }
     return obj;
 }
