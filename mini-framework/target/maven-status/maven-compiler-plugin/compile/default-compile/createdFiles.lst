@@ -3,6 +3,7 @@ model/ModelAndView.class
 annotation/UrlAnnotation.class
 annotation/Annotation.class
 annotation/JsonAnnotation.class
+annotation/RequestParam.class
 util/Utilitaire.class
 controller/FrontControllerServlet.class
 model/MethodeInfo.class

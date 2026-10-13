@@ -1,13 +1,20 @@
 package controller;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Parameter;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.gson.Gson;
 
 import annotation.JsonAnnotation;
+import annotation.RequestParam;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -16,16 +23,6 @@ import model.HTTPmethode;
 import model.MethodeInfo;
 import model.ModelAndView;
 import model.UrlInfo;
-
-import java.lang.reflect.Parameter;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-
-import java.util.Arrays;
-
-import java.util.HashSet;
-import java.util.Set;
 
 public class FrontControllerServlet extends HttpServlet {
     private HashMap<UrlInfo, MethodeInfo> mapping = new HashMap<>();
@@ -98,7 +95,7 @@ public class FrontControllerServlet extends HttpServlet {
                 return;
             }
 
-            // Cas 2 : comportement d'avant (HTML + forward)
+            // Cas 2 : HTML + forward
             response.setContentType("text/html;charset=UTF-8");
             response.getWriter().println("<h2>URL trouvée</h2>");
             response.getWriter().println("<p>Route : " + route + "</p>");
@@ -121,77 +118,112 @@ public class FrontControllerServlet extends HttpServlet {
         }
     }
 
-// prepare les argument necessaires pour l'appel d'une methode java
-private Object[] construireArguments(Method m, HttpServletRequest request) throws Exception {
-    Parameter[] params = m.getParameters();
-    Object[] args = new Object[params.length];
+    // =====================================================================
+    //  BINDING (sprint 7 / 7 bis)
+    // =====================================================================
 
-    long nbObjets = Arrays.stream(params).filter(p -> !estSimple(p.getType())).count();
-    boolean sansPrefixeAutorise = (nbObjets == 1);
-
-    // Noms déjà pris par les paramètres simples (ex : "titre", "quantite")
-    Set<String> nomsReserves = new HashSet<>();
-    for (Parameter p : params) {
-        if (estSimple(p.getType())) nomsReserves.add(p.getName());
-    }
-
-    for (int i = 0; i < params.length; i++) {
-        Class<?> type = params[i].getType();
-        if (estSimple(type)) {
-            args[i] = convertir(request.getParameter(params[i].getName()), type);
-        } else {
-            args[i] = construireObjet(type, params[i].getName(), "",
-                                      sansPrefixeAutorise, nomsReserves, request);
+    /**
+     * Nom à chercher dans la requête pour un paramètre :
+     * - la valeur de @RequestParam si elle est présente,
+     * - sinon le nom de la variable Java (nécessite le flag -parameters).
+     */
+    private String nomParametre(Parameter p) {
+        RequestParam rp = p.getAnnotation(RequestParam.class);
+        if (rp != null && !rp.value().isEmpty()) {
+            return rp.value();
         }
+        return p.getName();
     }
-    return args;
-}
 
-private boolean estSimple(Class<?> type) {
-    return type.isPrimitive() || type == String.class
-            || Number.class.isAssignableFrom(type) || type == Boolean.class;
-}
+    private Object[] construireArguments(Method m, HttpServletRequest request) throws Exception {
+        Parameter[] params = m.getParameters();
+        Object[] args = new Object[params.length];
 
-private Object construireObjet(Class<?> type, String nomParam, String chemin,
-                               boolean sansPrefixeAutorise, Set<String> nomsReserves,
-                               HttpServletRequest request) throws Exception {
-    System.out.println("RECURSION -> construireObjet(" + type.getSimpleName()
-            + ", parametre='" + nomParam + "', chemin='" + chemin + "')");
-    Object obj = type.getDeclaredConstructor().newInstance();
+        // Combien de paramètres sont des objets ?
+        long nbObjets = Arrays.stream(params).filter(p -> !estSimple(p.getType())).count();
+        // Un champ sans préfixe n'est permis que s'il n'y a qu'UN seul objet
+        boolean sansPrefixeAutorise = (nbObjets == 1);
 
-    for (Field f : type.getDeclaredFields()) {
-        if (Modifier.isStatic(f.getModifiers())) continue;
-
-        String cheminChamp = chemin.isEmpty() ? f.getName() : chemin + "." + f.getName();
-        f.setAccessible(true);
-
-        if (estSimple(f.getType())) {
-            String valeur = request.getParameter(nomParam + "." + cheminChamp);
-            // Sans préfixe : seulement si autorisé ET si le nom n'appartient pas à un paramètre simple
-            if (valeur == null && sansPrefixeAutorise && !nomsReserves.contains(cheminChamp)) {
-                valeur = request.getParameter(cheminChamp);
+        // Noms déjà pris par les paramètres simples (réservés)
+        Set<String> nomsReserves = new HashSet<>();
+        for (Parameter p : params) {
+            if (estSimple(p.getType())) {
+                nomsReserves.add(nomParametre(p));
             }
-            if (valeur == null) continue;
-            f.set(obj, convertir(valeur, f.getType()));
-
-        } else if (!f.getType().getName().startsWith("java.")) {
-            Object enfant = construireObjet(f.getType(), nomParam, cheminChamp,
-                                            sansPrefixeAutorise, nomsReserves, request);
-            f.set(obj, enfant);
         }
-    }
-    return obj;
-}
 
-private Object convertir(String valeur, Class<?> type) {
-    if (type == String.class) return valeur;
-    if (valeur == null || valeur.isEmpty()) {
-        return type.isPrimitive() ? (type == boolean.class ? (Object) false : (Object) 0) : null;
+        for (int i = 0; i < params.length; i++) {
+            Class<?> type = params[i].getType();
+            String nom = nomParametre(params[i]);
+
+            if (estSimple(type)) {
+                // Type simple : lu directement par son nom
+                args[i] = convertir(request.getParameter(nom), type);
+            } else {
+                // Objet : un paramètre annoté @RequestParam exige le préfixe
+                boolean sansPrefixe = sansPrefixeAutorise
+                        && params[i].getAnnotation(RequestParam.class) == null;
+                args[i] = construireObjet(type, nom, "", sansPrefixe, nomsReserves, request);
+            }
+        }
+        return args;
     }
-    if (type == int.class || type == Integer.class) return Integer.parseInt(valeur);
-    if (type == long.class || type == Long.class) return Long.parseLong(valeur);
-    if (type == double.class || type == Double.class) return Double.parseDouble(valeur);
-    if (type == boolean.class || type == Boolean.class) return Boolean.parseBoolean(valeur);
-    return valeur;
-}
+
+    private boolean estSimple(Class<?> type) {
+        return type.isPrimitive() || type == String.class
+                || Number.class.isAssignableFrom(type) || type == Boolean.class;
+    }
+
+    /**
+     * Construit un objet par réflexion. RÉCURSIF : si un champ est lui-même
+     * un objet, la méthode s'appelle pour ce champ.
+     *
+     * @param nomParam  préfixe (nom du paramètre ou valeur de @RequestParam)
+     * @param chemin    chemin du champ dans l'objet ("" puis "adresse", ...)
+     */
+    private Object construireObjet(Class<?> type, String nomParam, String chemin,
+                                   boolean sansPrefixeAutorise, Set<String> nomsReserves,
+                                   HttpServletRequest request) throws Exception {
+        // Trace de debug (à retirer après la démo)
+        System.out.println("RECURSION -> construireObjet(" + type.getSimpleName()
+                + ", parametre='" + nomParam + "', chemin='" + chemin + "')");
+
+        Object obj = type.getDeclaredConstructor().newInstance();
+
+        for (Field f : type.getDeclaredFields()) {
+            if (Modifier.isStatic(f.getModifiers())) continue;
+
+            String cheminChamp = chemin.isEmpty() ? f.getName() : chemin + "." + f.getName();
+            f.setAccessible(true);
+
+            if (estSimple(f.getType())) {
+                // Champ simple : "pers.nom", puis "nom" seulement si autorisé
+                String valeur = request.getParameter(nomParam + "." + cheminChamp);
+                if (valeur == null && sansPrefixeAutorise && !nomsReserves.contains(cheminChamp)) {
+                    valeur = request.getParameter(cheminChamp);
+                }
+                if (valeur == null) continue;
+                f.set(obj, convertir(valeur, f.getType()));
+
+            } else if (!f.getType().getName().startsWith("java.")) {
+                // Champ objet : RÉCURSION
+                Object enfant = construireObjet(f.getType(), nomParam, cheminChamp,
+                                                sansPrefixeAutorise, nomsReserves, request);
+                f.set(obj, enfant);
+            }
+        }
+        return obj;
+    }
+
+    private Object convertir(String valeur, Class<?> type) {
+        if (type == String.class) return valeur;
+        if (valeur == null || valeur.isEmpty()) {
+            return type.isPrimitive() ? (type == boolean.class ? (Object) false : (Object) 0) : null;
+        }
+        if (type == int.class || type == Integer.class) return Integer.parseInt(valeur);
+        if (type == long.class || type == Long.class) return Long.parseLong(valeur);
+        if (type == double.class || type == Double.class) return Double.parseDouble(valeur);
+        if (type == boolean.class || type == Boolean.class) return Boolean.parseBoolean(valeur);
+        return valeur;
+    }
 }
