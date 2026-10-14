@@ -1,19 +1,26 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Demo</title>
-</head>
-<body>
-    <h1>Demo du mini-framework</h1>
-    <ul>
-        <li><a href="page/hello">Sortie HTML (forward vers une JSP)</a></li>
-        <li><a href="api/hello">Sortie JSON (@JsonAnnotation)</a></li>
-        <li><a href="formulaire.jsp">Formulaire (sprint 7)</a></li>
-        <li><a href="formulaire-objet.jsp">Formulaire (sprint 7 bis, objet)</a></li>
-        <li><a href="formulaire-multi.jsp">Formulaire (sprint 7 bis, plusieurs objets)</a></li>
-        <li><a href="formulaire-mixte.jsp">Formulaire (sprint 7 bis, simple + objet)</a></li>
+<% request.setAttribute("pageTitle", "Accueil"); %>
+<%@ include file="/WEB-INF/jspf/header.jspf" %>
+
+<h1>Démo du mini-framework</h1>
+<p class="lead">Choisissez une démonstration :</p>
+
+<section class="card">
+    <h2>Sorties du contrôleur</h2>
+    <ul class="link-list">
+        <li><a href="${pageContext.request.contextPath}/page/hello">Sortie HTML (forward vers une JSP)</a></li>
+        <li><a href="${pageContext.request.contextPath}/api/hello">Sortie JSON (@JsonResponse)</a></li>
     </ul>
-</body>
-</html>
+</section>
+
+<section class="card">
+    <h2>Formulaires (data binding)</h2>
+    <ul class="link-list">
+        <li><a href="${pageContext.request.contextPath}/formulaire.jsp">Paramètres simples (sprint 7)</a></li>
+        <li><a href="${pageContext.request.contextPath}/formulaire-objet.jsp">Un objet (sprint 7 bis)</a></li>
+        <li><a href="${pageContext.request.contextPath}/formulaire-multi.jsp">Plusieurs objets du même type</a></li>
+        <li><a href="${pageContext.request.contextPath}/formulaire-mixte.jsp">Type simple + objet</a></li>
+    </ul>
+</section>
+
+<%@ include file="/WEB-INF/jspf/footer.jspf" %>

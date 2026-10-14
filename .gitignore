@@ -1,0 +1,21 @@
+# Build Maven
+target/
+*.class
+
+# Archives
+*.war
+*.jar
+*.ear
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+nbproject/
+
+# OS
+.DS_Store
+Thumbs.db

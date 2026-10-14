@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>${empty pageTitle ? 'Mini-framework MVC' : pageTitle}</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/style.css">
+</head>
+<body>
+<header class="site-header">
+    <a class="brand" href="${pageContext.request.contextPath}/">Mini-framework MVC</a>
+    <nav class="site-nav">
+        <a href="${pageContext.request.contextPath}/formulaire.jsp">Simple</a>
+        <a href="${pageContext.request.contextPath}/formulaire-objet.jsp">Objet</a>
+        <a href="${pageContext.request.contextPath}/formulaire-multi.jsp">Multi</a>
+        <a href="${pageContext.request.contextPath}/formulaire-mixte.jsp">Mixte</a>
+    </nav>
+</header>
+<main class="container">
