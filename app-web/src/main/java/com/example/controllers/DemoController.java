@@ -4,10 +4,14 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.example.models.Personne;
+import com.example.models.Artiste;
+import com.example.models.Dossier;
+import com.example.models.MapFile;
 import com.miniframework.annotation.Controller;
 import com.miniframework.annotation.JsonResponse;
 import com.miniframework.annotation.RequestParam;
 import com.miniframework.annotation.Url;
+import com.miniframework.binding.FileAttributeDetector;
 import com.miniframework.http.HttpMethod;
 import com.miniframework.mvc.ModelAndView;
 
@@ -64,31 +68,27 @@ public class DemoController {
     }
 
     // =====================================================================
-    //  Sprint 7 bis : un objet (avec champ imbriqué)
+    //  Sprint 7 bis : un objet (avec champ imbriqué) — réponse JSON
     // =====================================================================
 
     @Url(value = "/personne/objet", method = HttpMethod.POST)
-    public ModelAndView objetPost(Personne personne) {
+    @JsonResponse
+    public Personne objetPost(Personne personne) {
         return resultatObjet(personne);
     }
 
     @Url("/personne/objet")
-    public ModelAndView objetGet(Personne personne) {
+    @JsonResponse
+    public Personne objetGet(Personne personne) {
         return resultatObjet(personne);
     }
 
-    private ModelAndView resultatObjet(Personne personne) {
-        ModelAndView mv = new ModelAndView("done.jsp")
-                .addObject("nom", personne.getNom())
-                .addObject("age", personne.getAge())
-                .addObject("prenom", personne.getPrenom());
-
-        if (personne.getAdresse() != null) {
-            mv.addObject("rue", personne.getAdresse().getRue())
-              .addObject("ville", personne.getAdresse().getVille())
-              .addObject("codePostal", personne.getAdresse().getCodePostal());
-        }
-        return mv;
+    /**
+     * L'objet lié est renvoyé tel quel : grâce à @JsonResponse, le framework le
+     * sérialise en JSON (le champ imbriqué {@code adresse} est inclus).
+     */
+    private Personne resultatObjet(Personne personne) {
+        return personne;
     }
 
     @Url("/api/personne")
@@ -101,6 +101,96 @@ public class DemoController {
     @JsonResponse
     public Personne personneJsonPost(Personne personne) {
         return personne;
+    }
+
+
+
+
+
+
+     @Url(value = "/artiste/objet", method = HttpMethod.POST)
+    @JsonResponse
+    public Artiste objetPost(Artiste artiste) {
+        return resultatArtisteObjet(artiste);
+    }
+
+    @Url("/artiste/objet")
+    @JsonResponse
+    public Artiste objetGet(Artiste artiste) {
+        return resultatArtisteObjet(artiste);
+    }
+
+    /**
+     * L'objet lié est renvoyé tel quel : grâce à @JsonResponse, le framework le
+     * sérialise en JSON (le champ imbriqué {@code adresse} est inclus).
+     */
+    private Artiste resultatArtisteObjet(Artiste artiste) {
+        return artiste;
+    }
+
+    @Url("/api/artiste")
+    @JsonResponse
+    public Artiste artisteJsonGet(Artiste artiste) {
+        return artiste;
+    }
+
+    @Url(value = "/api/artiste", method = HttpMethod.POST)
+    @JsonResponse
+    public Artiste artisteJsonPost(Artiste artiste) {
+        return artiste;
+    }
+
+    // =====================================================================
+    //  Sprint 8 : pièces jointes (classe MapFile)
+    // =====================================================================
+
+    /**
+     * L'objet lié est retourné sous forme de métadonnées : on ne sérialise
+     * jamais les octets eux-mêmes, seulement le nom, le type et les tailles.
+     * La requête doit être {@code multipart/form-data} pour transmettre les fichiers.
+     */
+    @Url(value = "/dossier/objet", method = HttpMethod.POST)
+    @JsonResponse
+    public Map<String, Object> dossierPost(Dossier dossier) {
+        return resultatDossier(dossier);
+    }
+
+    /** Variante GET : aucun fichier possible, mais la détection reste vérifiable. */
+    @Url("/dossier/objet")
+    @JsonResponse
+    public Map<String, Object> dossierGet(Dossier dossier) {
+        return resultatDossier(dossier);
+    }
+
+    /**
+     * Vérifie que l'objet passé dans le formulaire contient bien l'attribut
+     * {@link MapFile} (détection réflexive {@link FileAttributeDetector}),
+     * puis décrit son contenu chargé.
+     */
+    private Map<String, Object> resultatDossier(Dossier dossier) {
+        Map<String, Object> resultat = new LinkedHashMap<>();
+        resultat.put("nom", dossier.getNom());
+        resultat.put("prenom", dossier.getPrenom());
+        resultat.put("mapFilePresent", FileAttributeDetector.containsFileAttribute(dossier));
+        resultat.put("fichier", description(dossier.getFichier()));
+        return resultat;
+    }
+
+    /** Métadonnées d'une {@link MapFile} : nom, type et tailles en octets. */
+    private Map<String, Object> description(MapFile fichier) {
+        Map<String, Object> meta = new LinkedHashMap<>();
+        if (fichier == null) {
+            meta.put("present", false);
+            return meta;
+        }
+        int recto = fichier.getRectoCIN() == null ? 0 : fichier.getRectoCIN().length;
+        int verso = fichier.getVersoCIN() == null ? 0 : fichier.getVersoCIN().length;
+        meta.put("present", recto > 0 || verso > 0);
+        meta.put("nomFichier", fichier.getNomFichier());
+        meta.put("type", fichier.getType());
+        meta.put("rectoTaille", recto);
+        meta.put("versoTaille", verso);
+        return meta;
     }
 
     // =====================================================================

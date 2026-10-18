@@ -12,6 +12,7 @@ import com.miniframework.routing.RouteRegistry;
 import com.miniframework.view.ViewResolver;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +21,16 @@ import jakarta.servlet.http.HttpServletResponse;
  * Servlet unique (front controller) qui reçoit toutes les requêtes, retrouve la
  * méthode de contrôleur correspondante, lie les paramètres, l'invoque puis
  * produit la réponse (vue JSP ou JSON).
+ *
+ * <p>{@code @MultipartConfig} est indispensable (sprint 8) : sans lui,
+ * {@code request.getPart()} — utilisé par {@code DataBinder} pour lire les
+ * {@code byte[]} d'une {@code MapFile} — lève une {@link IllegalStateException}.</p>
  */
+@MultipartConfig(
+        maxFileSize = 10L * 1024 * 1024,      // 10 Mo par fichier
+        maxRequestSize = 25L * 1024 * 1024,   // 25 Mo par requête
+        fileSizeThreshold = 1024 * 1024       // au-delà de 1 Mo : stocké sur disque
+)
 public class FrontControllerServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;

@@ -14,14 +14,20 @@
     <label>Prenom
         <input type="text" name="prenom">
     </label>
-    <label>Rue
-        <input type="text" name="adresse.rue">
+    <label>Nom de la rue
+        <input type="text" name="adresse.nomRue">
     </label>
     <label>Ville
         <input type="text" name="adresse.ville">
     </label>
     <label>Code postal
         <input type="number" name="adresse.codePostal">
+    </label>
+    <label>Parcelle
+        <input type="number" name="adresse.rue.parcelle">
+    </label>
+    <label>Lot
+        <input type="text" name="adresse.rue.lot">
     </label>
     <label>Méthode
         <select onchange="document.getElementById('monForm').method = this.value">

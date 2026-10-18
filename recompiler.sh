@@ -62,12 +62,19 @@ echo ">> JDK : $JAVA_HOME ($("$JAVA_HOME/bin/javac" -version 2>&1))"
 cd "$PROJECT_DIR"
 
 echo ">> Compilation du projet..."
-if mvn -q -o clean install; then
+LOG="$(mktemp)"
+if mvn -q -o clean install >"$LOG" 2>&1; then
     :
-else
-    echo ">> Dépendances manquantes hors-ligne, nouvel essai avec accès réseau..."
+elif grep -qiE "in offline mode|Failed to resolve|Could not resolve dependencies|Cannot access|Non-resolvable" "$LOG"; then
+    echo ">> Dépendances indisponibles hors-ligne, nouvel essai avec accès réseau..."
     mvn -q clean install
+else
+    cat "$LOG" >&2
+    echo ">> Échec de la compilation (voir ci-dessus)." >&2
+    rm -f "$LOG"
+    exit 1
 fi
+rm -f "$LOG"
 
 echo ">> Build OK."
 echo "   mini-framework : $(ls -1 "$PROJECT_DIR"/mini-framework/target/*.jar 2>/dev/null | head -1 || echo 'n/a')"

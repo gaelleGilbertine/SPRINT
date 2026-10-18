@@ -20,6 +20,8 @@
         <li><a href="${pageContext.request.contextPath}/formulaire-objet.jsp">Un objet (sprint 7 bis)</a></li>
         <li><a href="${pageContext.request.contextPath}/formulaire-multi.jsp">Plusieurs objets du même type</a></li>
         <li><a href="${pageContext.request.contextPath}/formulaire-mixte.jsp">Type simple + objet</a></li>
+        <li><a href="${pageContext.request.contextPath}/formulaire-Artiste.jsp">Un objet imbriqué (Artiste)</a></li>
+        <li><a href="${pageContext.request.contextPath}/formulaire-Dossier.jsp">Pièces jointes MapFile (sprint 8)</a></li>
     </ul>
 </section>
 

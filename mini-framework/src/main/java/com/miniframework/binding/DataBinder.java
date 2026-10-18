@@ -4,12 +4,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
 import com.miniframework.annotation.RequestParam;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.Part;
 
 /**
  * Relie les paramètres d'une requête HTTP aux arguments d'une méthode de
@@ -27,8 +29,14 @@ public class DataBinder {
     private final HttpServletRequest request;
     private final TypeConverter converter = new TypeConverter();
 
+    /** La requête est-elle {@code multipart/form-data} (envoi de fichiers) ? */
+    private final boolean multipart;
+
     public DataBinder(HttpServletRequest request) {
         this.request = request;
+        String contentType = request.getContentType();
+        this.multipart = contentType != null
+                && contentType.regionMatches(true, 0, "multipart/", 0, "multipart/".length());
     }
 
     public Object[] bind(Method method) throws Exception {
@@ -65,12 +73,21 @@ public class DataBinder {
             field.setAccessible(true);
 
             if (isSimple(field.getType())) {
-                String value = request.getParameter(parameterName + "." + fieldPath);
+                String value = readParameter(parameterName + "." + fieldPath);
                 if (value == null && allowNoPrefix && !reservedNames.contains(fieldPath)) {
-                    value = request.getParameter(fieldPath);
+                    value = readParameter(fieldPath);
                 }
                 if (value != null) {
                     field.set(instance, converter.convert(value, field.getType()));
+                }
+            } else if (field.getType() == byte[].class) {
+                // Sprint 8 : champ binaire lu dans les <input type="file">
+                byte[] contenu = readPart(parameterName + "." + fieldPath);
+                if (contenu == null && allowNoPrefix) {
+                    contenu = readPart(fieldPath);
+                }
+                if (contenu != null) {
+                    field.set(instance, contenu);
                 }
             } else if (!field.getType().getName().startsWith("java.")) {
                 field.set(instance, bindObject(field.getType(), parameterName, fieldPath,
@@ -78,6 +95,52 @@ public class DataBinder {
             }
         }
         return instance;
+    }
+
+    /**
+     * Lit un paramètre texte : d'abord dans les paramètres de la requête, puis,
+     * pour une requête {@code multipart/form-data}, dans la pièce jointe portant
+     * le même nom (certains conteneurs n'exposent pas les champs texte d'un
+     * multipart via {@code getParameter}).
+     *
+     * @return la valeur, ou {@code null} si le paramètre est absent
+     */
+    private String readParameter(String name) {
+        String value = request.getParameter(name);
+        if (value == null && multipart) {
+            try {
+                Part part = request.getPart(name);
+                if (part != null && part.getSize() > 0) {
+                    value = new String(part.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+                }
+            } catch (Exception e) {
+                return null;
+            }
+        }
+        return value;
+    }
+
+    /**
+     * Contenu d'un {@code <input type="file">}, ou {@code null} si le champ est
+     * absent de la requête ou si aucun fichier n'a été sélectionné.
+     */
+    private byte[] readPart(String name) {
+        if (!multipart) {
+            return null;
+        }
+        try {
+            Part part = request.getPart(name);
+            if (part == null) {
+                return null;
+            }
+            String nomFichier = part.getSubmittedFileName();
+            if (nomFichier == null || nomFichier.isEmpty() || part.getSize() == 0) {
+                return null;
+            }
+            return part.getInputStream().readAllBytes();
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private long countObjects(Parameter[] parameters) {
