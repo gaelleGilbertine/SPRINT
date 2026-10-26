@@ -8,10 +8,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.miniframework.annotation.RequestParam;
-
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.Part;
+
+import com.miniframework.annotation.RequestParam;
+import com.miniframework.session.Session;  
 
 /**
  * Relie les paramètres d'une requête HTTP aux arguments d'une méthode de
@@ -39,26 +40,33 @@ public class DataBinder {
                 && contentType.regionMatches(true, 0, "multipart/", 0, "multipart/".length());
     }
 
-    public Object[] bind(Method method) throws Exception {
-        Parameter[] parameters = method.getParameters();
-        Object[] arguments = new Object[parameters.length];
+public Object[] bind(Method method) throws Exception {
+    Parameter[] parameters = method.getParameters();
+    Object[] arguments = new Object[parameters.length];
 
-        boolean allowNoPrefix = countObjects(parameters) == 1;
-        Set<String> reservedNames = collectSimpleParameterNames(parameters);
+    boolean allowNoPrefix = countObjects(parameters) == 1;
+    Set<String> reservedNames = collectSimpleParameterNames(parameters);
 
-        for (int i = 0; i < parameters.length; i++) {
-            Class<?> type = parameters[i].getType();
-            String name = resolveName(parameters[i]);
+    for (int i = 0; i < parameters.length; i++) {
+        Class<?> type = parameters[i].getType();
 
-            if (isSimple(type)) {
-                arguments[i] = converter.convert(request.getParameter(name), type);
-            } else {
-                boolean noPrefix = allowNoPrefix && parameters[i].getAnnotation(RequestParam.class) == null;
-                arguments[i] = bindObject(type, name, "", noPrefix, reservedNames);
-            }
+        // Session : fournie par le framework, pas lue dans les paramètres HTTP
+        if (type == Session.class) {
+            arguments[i] = new Session(request.getSession());
+            continue;
         }
-        return arguments;
+
+        String name = resolveName(parameters[i]);
+
+        if (isSimple(type)) {
+            arguments[i] = converter.convert(request.getParameter(name), type);
+        } else {
+            boolean noPrefix = allowNoPrefix && parameters[i].getAnnotation(RequestParam.class) == null;
+            arguments[i] = bindObject(type, name, "", noPrefix, reservedNames);
+        }
     }
+    return arguments;
+}
 
     private Object bindObject(Class<?> type, String parameterName, String path,
                               boolean allowNoPrefix, Set<String> reservedNames) throws Exception {
@@ -143,15 +151,16 @@ public class DataBinder {
         }
     }
 
-    private long countObjects(Parameter[] parameters) {
-        long count = 0;
-        for (Parameter parameter : parameters) {
-            if (!isSimple(parameter.getType())) {
-                count++;
-            }
+ private long countObjects(Parameter[] parameters) {
+    long count = 0;
+    for (Parameter parameter : parameters) {
+        Class<?> type = parameter.getType();
+        if (!isSimple(type) && type != Session.class) {
+            count++;
         }
-        return count;
     }
+    return count;
+}
 
     private Set<String> collectSimpleParameterNames(Parameter[] parameters) {
         Set<String> names = new HashSet<>();

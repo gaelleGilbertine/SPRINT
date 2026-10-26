@@ -15,6 +15,8 @@ import com.miniframework.binding.FileAttributeDetector;
 import com.miniframework.http.HttpMethod;
 import com.miniframework.mvc.ModelAndView;
 
+import com.miniframework.session.Session;
+
 /**
  * Contrôleur de démonstration du mini-framework.
  *
@@ -308,4 +310,25 @@ public class DemoController {
         resultat.put("personne", personne);
         return resultat;
     }
+
+    @Url("/session/set")
+@JsonResponse
+public Map<String, String> sessionSet(String nom, Session session) {
+    session.set("user", nom);
+    Map<String, String> data = new LinkedHashMap<>();
+    data.put("action", "set");
+    data.put("sessionId", session.getId());
+    data.put("user", nom);
+    return data;
+}
+
+@Url("/session/get")
+@JsonResponse
+public Map<String, String> sessionGet(Session session) {
+    Map<String, String> data = new LinkedHashMap<>();
+    data.put("action", "get");
+    data.put("sessionId", session.getId());
+    data.put("user", String.valueOf(session.get("user")));
+    return data;
+}
 }

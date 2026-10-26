@@ -24,6 +24,8 @@
 
 
 
+
+
  DEPLOYEMENT: 
  1. /opt/Tomcat/bin/version.sh | grep "Server version"
  2. /opt/Tomcat/bin/shutdown.sh
