@@ -331,4 +331,27 @@ public Map<String, String> sessionGet(Session session) {
     data.put("user", String.valueOf(session.get("user")));
     return data;
 }
+
+@Url("/session/page")
+public ModelAndView sessionPage(Session session) {
+    return new ModelAndView("session.jsp")
+            .addObject("sessionId", session.getId())
+            .addObject("user", session.get("user"));
+}
+
+@Url(value = "/session/page", method = HttpMethod.POST)
+public ModelAndView sessionPageSave(String nom, Session session) {
+    if (nom != null && !nom.isBlank()) {
+        session.set("user", nom);
+    }
+    return sessionPage(session);
+}
+
+@Url("/session/logout")
+public ModelAndView sessionLogout(Session session) {
+    session.invalidate();
+    // on n'utilise plus l'objet session après invalidate()
+    return new ModelAndView("session.jsp")
+            .addObject("sessionId", "(session fermée)");
+}
 }

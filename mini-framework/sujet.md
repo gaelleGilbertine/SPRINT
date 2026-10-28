@@ -13,7 +13,7 @@
 - afaka mandray objet mitovy maro (arrive a reconnaitre d'ou vient l'objet)
 - afaka mandray tsy objet sy objet  
 
-[] sprint 8
+[ok] sprint 8
 - creation d'une classe MapFile :
    + Attributs
       * nom fichier
@@ -21,6 +21,13 @@
       * rectoCIN : bytes[]
       * versoCIN : bytes[]
 - on verifie si l'objet passe dans formulaire contient l'attribut : MapFile
+
+[] sprint 9
+la session
+
+[] srint 10
+- faire une autentification
+-  si la personne est connecter  pourra executer une fonction 
 
 
 
