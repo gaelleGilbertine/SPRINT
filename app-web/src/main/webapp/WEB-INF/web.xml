@@ -4,13 +4,18 @@
          xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
          version="6.0">
 
+    <display-name>app-web</display-name>
+
+    <!-- Package scanné au démarrage pour trouver les contrôleurs -->
     <context-param>
         <param-name>controller-package</param-name>
         <param-value>com.example.controllers</param-value>
     </context-param>
+
+    <!-- Les vues sont cherchées dans /WEB-INF/views/ (non accessibles directement) -->
     <context-param>
         <param-name>view-prefix</param-name>
-        <param-value>/</param-value>
+        <param-value>/WEB-INF/views/</param-value>
     </context-param>
     <context-param>
         <param-name>view-suffix</param-name>
@@ -18,15 +23,35 @@
     </context-param>
 
     <listener>
-        <listener-class>listener.AppContextListener</listener-class>
+        <listener-class>com.miniframework.listener.AppContextListener</listener-class>
     </listener>
+
+    <!-- Encodage UTF-8 pour toutes les JSP et pour les fragments inclus -->
+    <jsp-config>
+        <jsp-property-group>
+            <url-pattern>*.jsp</url-pattern>
+            <url-pattern>*.jspf</url-pattern>
+            <page-encoding>UTF-8</page-encoding>
+        </jsp-property-group>
+    </jsp-config>
 
     <servlet>
         <servlet-name>front</servlet-name>
-        <servlet-class>controller.FrontControllerServlet</servlet-class>
+        <servlet-class>com.miniframework.mvc.FrontControllerServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>front</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
+
+    <!--
+      Le front controller est mappé sur "/" : il remplace le servlet par défaut
+      du conteneur. On redirige donc explicitement les fichiers statiques vers ce
+      servlet par défaut ("default" dans Tomcat), sinon /assets/* renverrait 404.
+    -->
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/assets/*</url-pattern>
+    </servlet-mapping>
+
 </web-app>

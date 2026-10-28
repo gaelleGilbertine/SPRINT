@@ -1,29 +1,41 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Formulaire</title>
-</head>
-<body>
-    <h1>Formulaire</h1>
-   <form id="monForm" action="${pageContext.request.contextPath}/personne/objet" method="post">
-        <label>Nom : <input type="text" name="nom"></label><br>
-        <label>Age : <input type="number" name="age"></label><br>
-        <label>Prenom : <input type="text" name="prenom"></label><br>
-        <label>Rue : <input type="text" name="adresse.rue"></label><br>
-        <label>Ville : <input type="text" name="adresse.ville"></label><br>
-        <label>Code postal : <input type="number" name="adresse.codePostal"></label><br>
+<% request.setAttribute("pageTitle", "Formulaire objet"); %>
+<%@ include file="/WEB-INF/jspf/header.jspf" %>
 
-        <label>Méthode :
+<h1>Formulaire — un objet</h1>
+
+<form id="monForm" class="card form" action="${pageContext.request.contextPath}/personne/objet" method="post">
+    <label>Nom
+        <input type="text" name="nom">
+    </label>
+    <label>Age
+        <input type="number" name="age">
+    </label>
+    <label>Prenom
+        <input type="text" name="prenom">
+    </label>
+    <label>Nom de la rue
+        <input type="text" name="adresse.nomRue">
+    </label>
+    <label>Ville
+        <input type="text" name="adresse.ville">
+    </label>
+    <label>Code postal
+        <input type="number" name="adresse.codePostal">
+    </label>
+    <label>Parcelle
+        <input type="number" name="adresse.rue.parcelle">
+    </label>
+    <label>Lot
+        <input type="text" name="adresse.rue.lot">
+    </label>
+    <label>Méthode
         <select onchange="document.getElementById('monForm').method = this.value">
             <option value="post">POST</option>
             <option value="get">GET</option>
         </select>
-    </label><br>
+    </label>
+    <button type="submit">Envoyer</button>
+</form>
 
-
-        <button type="submit">Envoyer</button>
-    </form>
-</body>
-</html> 
+<%@ include file="/WEB-INF/jspf/footer.jspf" %>
