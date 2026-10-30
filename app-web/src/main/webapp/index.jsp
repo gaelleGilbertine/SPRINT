@@ -24,5 +24,11 @@
         <li><a href="${pageContext.request.contextPath}/formulaire-Dossier.jsp">Pièces jointes MapFile (sprint 8)</a></li>
     </ul>
 </section>
-
+<section class="card">
+    <h2>Authentification (sprint 10)</h2>
+    <ul class="link-list">
+        <li><a href="${pageContext.request.contextPath}/login">Se connecter</a></li>
+        <li><a href="${pageContext.request.contextPath}/secret/page">Page réservée aux connectés (@Authenticated)</a></li>
+    </ul>
+</section>
 <%@ include file="/WEB-INF/jspf/footer.jspf" %>

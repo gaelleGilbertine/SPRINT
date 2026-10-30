@@ -2,6 +2,7 @@ package com.miniframework.mvc;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.miniframework.annotation.JsonResponse;
@@ -9,6 +10,8 @@ import com.miniframework.binding.DataBinder;
 import com.miniframework.http.HttpMethod;
 import com.miniframework.json.JsonRenderer;
 import com.miniframework.routing.RouteRegistry;
+import com.miniframework.security.AuthGuard;
+import com.miniframework.session.Session;
 import com.miniframework.view.ViewResolver;
 
 import jakarta.servlet.ServletException;
@@ -16,6 +19,10 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.LinkedHashMap;
+import com.miniframework.security.AuthGuard;
+import com.miniframework.session.Session;
 
 /**
  * Servlet unique (front controller) qui reçoit toutes les requêtes, retrouve la
@@ -35,8 +42,15 @@ public class FrontControllerServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String REDIRECT_PREFIX = "redirect:";
+    private static final String DEFAULT_LOGIN_URL = "/login";
+
+    /** Préfixe d'un nom de vue pour demander une redirection HTTP plutôt qu'un forward JSP. */
+    
     private RouteRegistry routes;
     private ViewResolver viewResolver;
+    private String loginUrl;
+      private String accessDeniedView;
     private final JsonRenderer jsonRenderer = new JsonRenderer();
 
     @Override
@@ -51,6 +65,14 @@ public class FrontControllerServlet extends HttpServlet {
         this.viewResolver = new ViewResolver(
                 getServletContext().getInitParameter("view-prefix"),
                 getServletContext().getInitParameter("view-suffix"));
+                String configuredLoginUrl = getServletContext().getInitParameter("login-url");
+        this.loginUrl = (configuredLoginUrl == null || configuredLoginUrl.isBlank())
+                ? DEFAULT_LOGIN_URL
+                : configuredLoginUrl;
+        String configuredDeniedView = getServletContext().getInitParameter("access-denied-view");
+        this.accessDeniedView = (configuredDeniedView == null || configuredDeniedView.isBlank())
+                ? null
+                : configuredDeniedView;
     }
 
     @Override
@@ -85,6 +107,25 @@ public class FrontControllerServlet extends HttpServlet {
             return;
         }
 
+        // Sprint 10 : une méthode @Authenticated n'est exécutée que si la personne est connectée.
+        // getSession(false) : on ne crée pas de session juste pour constater qu'il n'y en a pas.
+        if (AuthGuard.isProtected(handler)) {
+            if (!AuthGuard.isAuthenticated(request.getSession(false))) {
+                denyAccess(request, response, handler, httpMethod, route);
+                return;
+            }
+            // évite qu'après déconnexion le bouton « Retour » réaffiche la page protégée
+            response.setHeader("Cache-Control", "no-store");
+        }
+                if (AuthGuard.isProtected(handler)) {
+            if (!AuthGuard.isAuthenticated(request.getSession(false))) {
+                denyAccess(request, response, handler, httpMethod, route);
+                return;
+            }
+            response.setHeader("Cache-Control", "no-store");
+        }
+
+
         try {
             Object controller = handler.getDeclaringClass().getDeclaredConstructor().newInstance();
             Object[] arguments = new DataBinder(request).bind(handler);
@@ -98,6 +139,39 @@ public class FrontControllerServlet extends HttpServlet {
         } catch (Exception e) {
             throw new ServletException("Erreur lors du traitement de " + httpMethod + " " + route, e);
         }
+    }
+
+    /**
+     * Refuse l'accès à une route protégée : 401 + JSON pour une API, sinon
+     * redirection vers la page de connexion.
+     */
+    private void denyAccess(HttpServletRequest request, HttpServletResponse response,
+                            Method handler, HttpMethod httpMethod, String route)
+            throws ServletException, IOException {
+        if (handler.isAnnotationPresent(JsonResponse.class)) {
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "Authentification requise");
+            error.put("status", HttpServletResponse.SC_UNAUTHORIZED);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().print(jsonRenderer.toJson(error));
+            return;
+        }
+        if (httpMethod == HttpMethod.GET) {
+            String query = request.getQueryString();
+            request.getSession().setAttribute(Session.REQUESTED_URL_KEY,
+                    query == null ? route : route + "?" + query);
+        }
+
+        String message = "Vous devez être connecté pour accéder à cette page.";
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        if (accessDeniedView == null) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, message);
+            return;
+        }
+        request.setAttribute("message", message);
+        request.setAttribute("loginUrl", request.getContextPath() + loginUrl);
+        request.getRequestDispatcher(viewResolver.resolve(accessDeniedView)).forward(request, response);
     }
 
     private void renderJson(HttpServletResponse response, Object result) throws IOException {
@@ -115,10 +189,18 @@ public class FrontControllerServlet extends HttpServlet {
                     "Le contrôleur n'a retourné aucune vue à afficher.");
             return;
         }
+        String viewName = modelAndView.getView();
+        if (viewName != null && viewName.startsWith(REDIRECT_PREFIX)) {
+            // Chemin relatif au contexte : "redirect:/login" -> /app-web/login
+            response.sendRedirect(request.getContextPath() + viewName.substring(REDIRECT_PREFIX.length()));
+            return;
+        }
+               
+        
         for (Map.Entry<String, Object> entry : modelAndView.getModel().entrySet()) {
             request.setAttribute(entry.getKey(), entry.getValue());
         }
-        String view = viewResolver.resolve(modelAndView.getView());
+        String view = viewResolver.resolve(viewName);
         request.getRequestDispatcher(view).forward(request, response);
     }
 
