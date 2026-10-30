@@ -14,6 +14,14 @@
         <a href="${pageContext.request.contextPath}/formulaire-objet.jsp">Objet</a>
         <a href="${pageContext.request.contextPath}/formulaire-multi.jsp">Multi</a>
         <a href="${pageContext.request.contextPath}/formulaire-mixte.jsp">Mixte</a>
-    </nav>
+                <% if (session.getAttribute("auth.user") != null) { %>
+        <span class="user-badge">${sessionScope['auth.user'].nom}</span>
+        <form class="inline-form" action="${pageContext.request.contextPath}/logout" method="post">
+            <button type="submit" class="link-button">Déconnexion</button>
+        </form>
+        <% } else { %>
+        <a href="${pageContext.request.contextPath}/login">Connexion</a>
+        <% } %>
+  </nav>
 </header>
 <main class="container">

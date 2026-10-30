@@ -149,3 +149,17 @@ button:hover {
     color: var(--muted);
     font-size: 0.85rem;
 }
+.alert { padding: 0.7rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.alert-error { color: #b42318; background: #fef3f2; border: 1px solid #fecdca; }
+
+.site-nav { display: flex; align-items: center; flex-wrap: wrap; }
+.user-badge { margin-left: 1rem; font-weight: 600; }
+.inline-form { display: inline; margin: 0; }
+
+.link-button { padding: 0; margin-left: 1rem; color: var(--muted); background: none; font-size: 1rem; }
+.link-button:hover { color: var(--primary); background: none; }
+
+.output {
+    padding: 0.8rem 1rem; overflow-x: auto;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+}

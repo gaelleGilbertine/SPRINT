@@ -52,7 +52,7 @@ public Object[] bind(Method method) throws Exception {
 
         // Session : fournie par le framework, pas lue dans les paramètres HTTP
         if (type == Session.class) {
-            arguments[i] = new Session(request.getSession());
+            arguments[i] = new Session(request);
             continue;
         }
 
