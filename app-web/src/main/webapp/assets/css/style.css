@@ -163,3 +163,12 @@ button:hover {
     padding: 0.8rem 1rem; overflow-x: auto;
     background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
 }
+.role-badge {
+    margin-left: 0.4rem; padding: 0.1rem 0.5rem; font-size: 0.75rem;
+    color: var(--primary-dark); background: #e0e9ff; border-radius: 999px;
+}
+
+.table { width: 100%; border-collapse: collapse; padding: 0; overflow: hidden; }
+.table th, .table td { padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid var(--border); }
+.table th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+.table tbody tr:last-child td { border-bottom: none; }

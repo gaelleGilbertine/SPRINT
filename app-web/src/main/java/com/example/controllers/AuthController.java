@@ -31,7 +31,7 @@ public class AuthController {
         }
 
         String destination = session.takeRequestedUrl();
-        session.login(utilisateur);
+        session.login(utilisateur, utilisateur.getRoles());
         return new ModelAndView("redirect:" + (destination != null ? destination : PAGE_PAR_DEFAUT));
     }
 

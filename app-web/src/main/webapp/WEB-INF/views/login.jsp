@@ -18,6 +18,6 @@
     <button type="submit">Se connecter</button>
 </form>
 
-<p class="lead">Comptes de démo : <code>admin / admin123</code> ou <code>rakoto / rakoto123</code>.</p>
+<p class="lead">Comptes de démo : <code>admin / admin123</code> (ADMIN), <code>rh / rh123</code> (RH) ou <code>rakoto / rakoto123</code> (EMPLOYE).</p>
 
 <%@ include file="/WEB-INF/jspf/footer.jspf" %>

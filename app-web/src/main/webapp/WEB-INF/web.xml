@@ -25,6 +25,11 @@
         <param-name>login-url</param-name>
         <param-value>/login</param-value>
     </context-param>
+        <!-- Sprint 10 bis : vue affichée (403) quand la personne connectée n'a pas le rôle exigé -->
+    <context-param>
+        <param-name>forbidden-view</param-name>
+        <param-value>forbidden.jsp</param-value>
+    </context-param>
 
     <listener>
         <listener-class>com.miniframework.listener.AppContextListener</listener-class>
