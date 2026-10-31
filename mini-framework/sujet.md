@@ -29,11 +29,11 @@ la session
 - faire une autentification
 -  si la personne est connecter  pourra executer une fonction 
 
-[] sprint 10 bis
+[ok] sprint 10 bis
 - s'autentifier a partir de role
 - si un utilisateur possede un role il a acces a la liste des employer par exemple
 
-[] verifier le singleton
+[ok] verifier le singleton
 
 
 

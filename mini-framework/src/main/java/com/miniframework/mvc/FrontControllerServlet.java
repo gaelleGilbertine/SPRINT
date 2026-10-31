@@ -20,6 +20,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import com.miniframework.routing.ControllerRegistry;
+import com.miniframework.routing.RouteRegistry;
 /**
  * Servlet unique (front controller) qui reçoit toutes les requêtes, retrouve la
  * méthode de contrôleur correspondante, lie les paramètres, l'invoque puis
@@ -43,6 +45,7 @@ public class FrontControllerServlet extends HttpServlet {
     private static final String DEFAULT_LOGIN_URL = "/login";
 
     private RouteRegistry routes;
+    private ControllerRegistry controllers;
     private ViewResolver viewResolver;
     private String loginUrl;
     private String accessDeniedView;
@@ -57,7 +60,12 @@ public class FrontControllerServlet extends HttpServlet {
                     "Table de routage introuvable. Vérifiez le context-param 'controller-package' "
                             + "et le listener AppContextListener.");
         }
-        this.routes = (RouteRegistry) registry;
+                this.routes = (RouteRegistry) registry;
+        Object controllerRegistry = getServletContext().getAttribute(ControllerRegistry.CONTEXT_ATTRIBUTE);
+        if (!(controllerRegistry instanceof ControllerRegistry)) {
+            throw new ServletException("Registre des contrôleurs introuvable : vérifiez le listener AppContextListener.");
+        }
+        this.controllers = (ControllerRegistry) controllerRegistry;
         this.viewResolver = new ViewResolver(
                 getServletContext().getInitParameter("view-prefix"),
                 getServletContext().getInitParameter("view-suffix"));
@@ -128,7 +136,7 @@ public class FrontControllerServlet extends HttpServlet {
         }
 
         try {
-            Object controller = handler.getDeclaringClass().getDeclaredConstructor().newInstance();
+            Object controller = controllers.get(handler.getDeclaringClass());
             Object[] arguments = new DataBinder(request).bind(handler);
             Object result = handler.invoke(controller, arguments);
 
