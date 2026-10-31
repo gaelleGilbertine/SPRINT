@@ -17,15 +17,16 @@ public final class UserStore {
     private static final String EMPREINTE_FACTICE = PasswordHasher.hash("sans-importance");
 
     static {
-        ajouter("admin", "Administrateur", "admin123");
-        ajouter("rakoto", "Rakoto Jean", "rakoto123");
+        ajouter("admin", "Administrateur", "admin123", "ADMIN");
+        ajouter("rh", "Rasoa Hanitra", "rh123", "RH");
+        ajouter("rakoto", "Rakoto Jean", "rakoto123", "EMPLOYE");
     }
 
     private UserStore() {
     }
 
-    private static void ajouter(String login, String nom, String motDePasse) {
-        COMPTES.put(login, new Compte(new Utilisateur(login, nom), PasswordHasher.hash(motDePasse)));
+    private static void ajouter(String login, String nom, String motDePasse, String... roles) {
+        COMPTES.put(login, new Compte(new Utilisateur(login, nom, roles), PasswordHasher.hash(motDePasse)));
     }
 
     public static Utilisateur authentifier(String login, String motDePasse) {

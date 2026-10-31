@@ -14,8 +14,10 @@
         <a href="${pageContext.request.contextPath}/formulaire-objet.jsp">Objet</a>
         <a href="${pageContext.request.contextPath}/formulaire-multi.jsp">Multi</a>
         <a href="${pageContext.request.contextPath}/formulaire-mixte.jsp">Mixte</a>
-                <% if (session.getAttribute("auth.user") != null) { %>
+                       <% if (session.getAttribute("auth.user") != null) { %>
+        <a href="${pageContext.request.contextPath}/employes">Employés</a>
         <span class="user-badge">${sessionScope['auth.user'].nom}</span>
+        <span class="role-badge">${sessionScope['auth.roles']}</span>
         <form class="inline-form" action="${pageContext.request.contextPath}/logout" method="post">
             <button type="submit" class="link-button">Déconnexion</button>
         </form>

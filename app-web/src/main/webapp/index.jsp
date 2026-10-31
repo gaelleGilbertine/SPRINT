@@ -25,10 +25,12 @@
     </ul>
 </section>
 <section class="card">
-    <h2>Authentification (sprint 10)</h2>
+    <h2>Rôles (sprint 10 bis)</h2>
     <ul class="link-list">
-        <li><a href="${pageContext.request.contextPath}/login">Se connecter</a></li>
-        <li><a href="${pageContext.request.contextPath}/secret/page">Page réservée aux connectés (@Authenticated)</a></li>
+        <li><a href="${pageContext.request.contextPath}/employes">Liste des employés (ADMIN ou RH)</a></li>
+        <li><a href="${pageContext.request.contextPath}/api/employes">Même liste en JSON (401 / 403 / 200)</a></li>
     </ul>
+    <p class="lead">Comptes : <code>admin / admin123</code> (ADMIN), <code>rh / rh123</code> (RH),
+        <code>rakoto / rakoto123</code> (EMPLOYE &rarr; refusé).</p>
 </section>
 <%@ include file="/WEB-INF/jspf/footer.jspf" %>

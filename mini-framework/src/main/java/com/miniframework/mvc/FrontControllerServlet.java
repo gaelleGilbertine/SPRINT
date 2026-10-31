@@ -20,10 +20,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.util.LinkedHashMap;
-import com.miniframework.security.AuthGuard;
-import com.miniframework.session.Session;
-
 /**
  * Servlet unique (front controller) qui reçoit toutes les requêtes, retrouve la
  * méthode de contrôleur correspondante, lie les paramètres, l'invoque puis
@@ -42,15 +38,15 @@ public class FrontControllerServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
 
+    /** Préfixe d'un nom de vue pour demander une redirection HTTP plutôt qu'un forward JSP. */
     public static final String REDIRECT_PREFIX = "redirect:";
     private static final String DEFAULT_LOGIN_URL = "/login";
 
-    /** Préfixe d'un nom de vue pour demander une redirection HTTP plutôt qu'un forward JSP. */
-    
     private RouteRegistry routes;
     private ViewResolver viewResolver;
     private String loginUrl;
-      private String accessDeniedView;
+    private String accessDeniedView;
+    private String forbiddenView;
     private final JsonRenderer jsonRenderer = new JsonRenderer();
 
     @Override
@@ -65,7 +61,7 @@ public class FrontControllerServlet extends HttpServlet {
         this.viewResolver = new ViewResolver(
                 getServletContext().getInitParameter("view-prefix"),
                 getServletContext().getInitParameter("view-suffix"));
-                String configuredLoginUrl = getServletContext().getInitParameter("login-url");
+        String configuredLoginUrl = getServletContext().getInitParameter("login-url");
         this.loginUrl = (configuredLoginUrl == null || configuredLoginUrl.isBlank())
                 ? DEFAULT_LOGIN_URL
                 : configuredLoginUrl;
@@ -73,6 +69,10 @@ public class FrontControllerServlet extends HttpServlet {
         this.accessDeniedView = (configuredDeniedView == null || configuredDeniedView.isBlank())
                 ? null
                 : configuredDeniedView;
+        String configuredForbiddenView = getServletContext().getInitParameter("forbidden-view");
+        this.forbiddenView = (configuredForbiddenView == null || configuredForbiddenView.isBlank())
+                ? null
+                : configuredForbiddenView;
     }
 
     @Override
@@ -107,24 +107,25 @@ public class FrontControllerServlet extends HttpServlet {
             return;
         }
 
-        // Sprint 10 : une méthode @Authenticated n'est exécutée que si la personne est connectée.
+        // Sprint 10 / 10 bis : une méthode @Authenticated n'est exécutée que si la personne
+        // est connectée et, si des rôles sont exigés, possède au moins l'un d'eux.
         // getSession(false) : on ne crée pas de session juste pour constater qu'il n'y en a pas.
         if (AuthGuard.isProtected(handler)) {
-            if (!AuthGuard.isAuthenticated(request.getSession(false))) {
-                denyAccess(request, response, handler, httpMethod, route);
-                return;
+            switch (AuthGuard.check(handler, request.getSession(false))) {
+                case UNAUTHENTICATED -> {
+                    denyAccess(request, response, handler, httpMethod, route);
+                    return;
+                }
+                case FORBIDDEN -> {
+                    denyForbidden(request, response, handler);
+                    return;
+                }
+                case ALLOWED -> {
+                    // évite qu'après déconnexion le bouton « Retour » réaffiche la page protégée
+                    response.setHeader("Cache-Control", "no-store");
+                }
             }
-            // évite qu'après déconnexion le bouton « Retour » réaffiche la page protégée
-            response.setHeader("Cache-Control", "no-store");
         }
-                if (AuthGuard.isProtected(handler)) {
-            if (!AuthGuard.isAuthenticated(request.getSession(false))) {
-                denyAccess(request, response, handler, httpMethod, route);
-                return;
-            }
-            response.setHeader("Cache-Control", "no-store");
-        }
-
 
         try {
             Object controller = handler.getDeclaringClass().getDeclaredConstructor().newInstance();
@@ -174,6 +175,34 @@ public class FrontControllerServlet extends HttpServlet {
         request.getRequestDispatcher(viewResolver.resolve(accessDeniedView)).forward(request, response);
     }
 
+    /**
+     * Personne connectée mais sans le rôle exigé : 403 + JSON pour une API, sinon la vue
+     * {@code forbidden-view} (context-param) ou, à défaut, la page d'erreur 403 du conteneur.
+     * On ne mémorise pas l'URL demandée : se reconnecter avec le même compte ne changerait rien.
+     */
+    private void denyForbidden(HttpServletRequest request, HttpServletResponse response, Method handler)
+            throws ServletException, IOException {
+        String message = "Accès refusé : vous n'avez pas le rôle requis pour cette page.";
+        if (handler.isAnnotationPresent(JsonResponse.class)) {
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "Accès interdit : rôle insuffisant");
+            error.put("status", HttpServletResponse.SC_FORBIDDEN);
+            error.put("rolesRequis", AuthGuard.requiredRoles(handler));
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().print(jsonRenderer.toJson(error));
+            return;
+        }
+        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+        if (forbiddenView == null) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, message);
+            return;
+        }
+        request.setAttribute("message", message);
+        request.setAttribute("rolesRequis", AuthGuard.requiredRoles(handler));
+        request.getRequestDispatcher(viewResolver.resolve(forbiddenView)).forward(request, response);
+    }
+
     private void renderJson(HttpServletResponse response, Object result) throws IOException {
         Object data = (result instanceof ModelAndView modelAndView)
                 ? modelAndView.getModel()
@@ -195,8 +224,7 @@ public class FrontControllerServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + viewName.substring(REDIRECT_PREFIX.length()));
             return;
         }
-               
-        
+
         for (Map.Entry<String, Object> entry : modelAndView.getModel().entrySet()) {
             request.setAttribute(entry.getKey(), entry.getValue());
         }

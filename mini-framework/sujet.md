@@ -22,13 +22,18 @@
       * versoCIN : bytes[]
 - on verifie si l'objet passe dans formulaire contient l'attribut : MapFile
 
-[] sprint 9
+[ok] sprint 9
 la session
 
-[] srint 10
+[ok] srint 10
 - faire une autentification
 -  si la personne est connecter  pourra executer une fonction 
 
+[] sprint 10 bis
+- s'autentifier a partir de role
+- si un utilisateur possede un role il a acces a la liste des employer par exemple
+
+[] verifier le singleton
 
 
 
